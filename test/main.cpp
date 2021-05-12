@@ -314,13 +314,8 @@ int main(int argc, char* argv[])
 
     FILE *devin = fdopen(&pc, "r");
     FILE *devout = fdopen(&pc, "w");
-
-    memset(buf, 0, 256);
-    sprintf(buf,"/getAcc/run\n\r");
-    RPC::call(buf, outbuf);
-    printf("%s\r\n", outbuf);
     
-    /*while (true) {
+    while (true) {
         memset(buf, 0, 256);      // clear buffer
         for(int i=0; i<255; i++) {
             char recv = fgetc(devin);
@@ -332,5 +327,5 @@ int main(int argc, char* argv[])
         }
         RPC::call(buf, outbuf);
         printf("%s\r\n", outbuf);
-    }*/
+    }
 }
