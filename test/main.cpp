@@ -56,6 +56,7 @@ int function_index=0;
 int angle=0;
 int mode=0;
 int indct=0;
+int eventNum=0;
 
 // Create an area of memory to use for input, output, and intermediate arrays.
 // The size of this will depend on the model you're using, and may need to be
@@ -116,18 +117,22 @@ void messageArrived(MQTT::MessageData& md) {
 }
 
 void publish_message(MQTT::Client<MQTTNetwork, Countdown>* client) {
+    if(eventNum>5)
+    {
+        printf("exit\n\r");
+        return;
+    }
     myled3=1;
     char tempBuf[256];
     memset(tempBuf, 0, 256);
     strcpy(tempBuf,bufff);
     printf(tempBuf);
 
-    uLCD.cls();
-    uLCD.printf("\n%s\n",tempBuf);
+    uLCD.printf("\n#%d  %s", eventNum, tempBuf);
         
     MQTT::Message message;
     char buff[100];
-    sprintf(buff, "QoS0 Hello, current gesture is: %s", tempBuf);
+    sprintf(buff, "QoS0 Hello, gesture #%d is: %s", eventNum, tempBuf);
     message.qos = MQTT::QOS0;
     message.retained = false;
     message.dup = false;
@@ -242,10 +247,22 @@ void dct()
         // Produce an output
         if (gesture_index < label_num) 
         {   
-            memset(bufff, 0, 256);
-            strcpy(bufff,config.output_message[gesture_index]);
-            error_reporter->Report(config.output_message[gesture_index]);
-            sw3.rise(mqtt_queue.event(&publish_message, &client));
+            //myled1=0;
+            eventNum+=1;
+            if(eventNum<=5)
+            {
+                memset(bufff, 0, 256);
+                strcpy(bufff,config.output_message[gesture_index]);
+                error_reporter->Report(config.output_message[gesture_index]);
+                sw3.rise(mqtt_queue.event(&publish_message, &client));
+                ThisThread::sleep_for(2s);
+                //myled1=!myled1;
+            }
+            else
+            {
+                myled3=0;
+                break;
+            } 
         }
     }
     return;
@@ -262,6 +279,8 @@ void getAcc(Arguments *in, Reply *out) {
     } else {
         out->putData("Failed to execute.");
     }
+    uLCD.cls();
+    uLCD.printf("\nAll five gestures:\n");
     t0.start(dct);
     return;
 }
@@ -314,7 +333,7 @@ int main(int argc, char* argv[])
 
     FILE *devin = fdopen(&pc, "r");
     FILE *devout = fdopen(&pc, "w");
-    
+
     while (true) {
         memset(buf, 0, 256);      // clear buffer
         for(int i=0; i<255; i++) {
@@ -329,3 +348,5 @@ int main(int argc, char* argv[])
         printf("%s\r\n", outbuf);
     }
 }
+
+//     /getAcc/run
